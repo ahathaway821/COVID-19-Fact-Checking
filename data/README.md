@@ -7,3 +7,4 @@ This directory contains the data scraped from different sources along with the d
 3. POYNTER : 27th May 2020
 4. WHO MYTHS : 1st June 2020
 5. CoAID Github Repository : 7th June 2020
+6. ESOC Princeton : 4th June 2020 (Link : https://esoc.princeton.edu/files/covid-019-disinformation-data)
