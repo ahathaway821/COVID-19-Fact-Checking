@@ -1,0 +1,38 @@
+import sys
+from requests_aws4auth import AWS4Auth
+import boto3
+import requests
+import pandas as pd
+
+host = 'http://localhost:9200/' # The domain with https:// and trailing slash. For example, https://my-test-domain.us-east-1.es.amazonaws.com/
+path = 'claim-match/claims' # the Elasticsearch API endpoint
+region = 'us-west-2' # For example, us-west-1
+
+#service = 'es'
+#credentials = boto3.Session().get_credentials()
+#awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, service, session_token=credentials.token)
+
+url = host + path
+print(sys.argv[1])
+df = pd.read_csv(sys.argv[1])
+df['json'] = df.apply(lambda x: x.to_json(), axis=1)
+
+for i in df.index:
+    claim_record = df.loc[i]
+    payload = {
+        "claim": claim_record["claim"],
+        "date": claim_record["date"],
+        "label": claim_record["label"],
+        "claim_source": claim_record["claim_source"] or "",
+        "fact_check_url": claim_record["fact_check_url"] or ""
+    }
+    r = requests.post(url, json=payload) #r = requests.put(url, auth=awsauth, json=payload)
+
+    if i % 100 == 0:
+        print(f'{i} records uploaded')
+
+print('--- Completed upload ---')
+print(f'{df.index} records uploaded successfully')
+
+
+#python3 upload-claims.py ~/Downloads/claims.csv
