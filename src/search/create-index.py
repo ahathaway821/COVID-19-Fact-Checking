@@ -32,7 +32,7 @@ payload = {
         "tokenizer": {
           "edge_ngram_tokenizer": {
             "type": "edge_ngram",
-            "min_gram": 2,
+            "min_gram": 3,
             "max_gram": 10,
             "token_chars": [
               "letter"
