@@ -4,13 +4,21 @@ The purpose of this folder is to
     2. Upload data into the index
     3. Test that the index is working correctly
 
-For each of the following scripts, be sure to add in aws credentials when loading data into aws vs local elasticsearch cluster
+Each of the following scripts is set up to work locally and to work within aws.
+
+Be sure to:
+1. update the host to http:localhost:9200 when running locally
+2. comment out aws specific credential lines
+3. trigger requests without aws creds
+
+There are commented out lines for each of these 3 items.
 
 ## Create Index
 python3 create-index.py 
 
 ## Upload data
 python3 upload-claims.py path-to-claims.csv
+Currently, the script is set up to use the claims located at: https://covid-19-claims.s3-us-west-2.amazonaws.com/claims.csv
 
 ## Test uploaded data
 python3 test-query.py "coronavirus"
