@@ -8,9 +8,9 @@ host = 'http://localhost:9200/' # The domain with https:// and trailing slash. F
 path = 'claim-match' # the Elasticsearch API endpoint
 region = 'us-west-2' # For example, us-west-1
 
-service = 'es'
-credentials = boto3.Session().get_credentials()
-awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, service, session_token=credentials.token)
+#service = 'es'
+#credentials = boto3.Session().get_credentials()
+#awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, service, session_token=credentials.token)
 
 url = host + path
 
