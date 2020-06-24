@@ -2,9 +2,10 @@ from requests_aws4auth import AWS4Auth
 import boto3
 import requests
 from pprint import pprint
+import time
 
-#host = 'http://localhost:9200/' # The domain with https:// and trailing slash. For example, https://my-test-domain.us-east-1.es.amazonaws.com/
-host = 'https://vpc-claim-match-5nmoeqwo3jokdkuptul5mkhhfm.us-west-2.es.amazonaws.com/'
+host = 'http://localhost:9200/' # The domain with https:// and trailing slash. For example, https://my-test-domain.us-east-1.es.amazonaws.com/
+#host = 'https://vpc-claim-match-5nmoeqwo3jokdkuptul5mkhhfm.us-west-2.es.amazonaws.com/'
 path = 'claim-match' # the Elasticsearch API endpoint
 region = 'us-west-2' # For example, us-west-1
 
@@ -54,7 +55,8 @@ payload = {
           "type": "text"
         },
         "date": {
-           "type": "date"
+           "type": "date",
+           "null_value": time.strftime('%Y-%m-%d', time.gmtime(0))
         },
         "claim_source": {
            "type": "text"
