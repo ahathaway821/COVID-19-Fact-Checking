@@ -7,7 +7,7 @@ The purpose of this folder is to
 Each of the following scripts is set up to work locally and to work within aws.
 
 Be sure to:
-1. Update the host to http:localhost:9200 when running locally
+1. Update the host to <a href="http:localhost:9200">http:localhost:9200</a> when running locally
 2. Comment out aws specific credential lines
 3. Trigger requests without aws creds
 
