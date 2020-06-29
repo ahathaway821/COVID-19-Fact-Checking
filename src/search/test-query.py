@@ -16,16 +16,21 @@ region = 'us-west-2' # For example, us-west-1
 
 url = host + path
 query_text = sys.argv[1]
+print(query_text)
 
 payload = {
   "query": {
     "match": {
-      "claim": query_text
+      "claim": {
+        "query": query_text,
+        "operator": "and",
+        "fuzziness": 2
+      }
     }
   },
   "sort": ["_score", {"date": "desc"}]
 }
 
-r = requests.post(url, json=payload)
+r = requests.get(url, json=payload)
 #r = requests.post(url, auth=awsauth, json=payload)
 pprint(vars(r));
