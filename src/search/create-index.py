@@ -30,13 +30,18 @@ payload = {
               "lowercase"
             ],
             "tokenizer": "edge_ngram_tokenizer"
+          },
+          "standard_analyzer": {
+            "type": "standard",
+            "max_token_length": 5,
+            "stopwords": "_english_"
           }
         },
         "tokenizer": {
           "edge_ngram_tokenizer": {
-            "type": "edge_ngram",
+            "type": "ngram",
             "min_gram": 3,
-            "max_gram": 10,
+            "max_gram": 3,
             "token_chars": [
               "letter"
             ]
@@ -49,7 +54,7 @@ payload = {
       "properties": {
         "claim": {
           "type": "text",
-          "analyzer": "edge_ngram_analyzer"
+          "analyzer": "standard_analyzer"
         },
         "label": {
           "type": "text"

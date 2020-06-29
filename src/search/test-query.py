@@ -20,7 +20,9 @@ query_text = sys.argv[1]
 payload = {
   "query": {
     "match": {
-      "claim": query_text
+      "claim": {
+        "query": query_text,
+      }
     }
   },
   "sort": ["_score", {"date": "desc"}]
