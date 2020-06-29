@@ -19,34 +19,27 @@ payload = {
   "settings": {
     "index": {
       "analysis": {
-        "filter": {},
         "analyzer": {
-          "analyzer_keyword": {
-            "tokenizer": "keyword",
-            "filter": "lowercase"
-          },
-          "edge_ngram_analyzer": {
+          "autocomplete": {
+            "tokenizer": "autocomplete",
             "filter": [
               "lowercase"
-            ],
-            "tokenizer": "edge_ngram_tokenizer"
+            ]
           },
-          "standard_analyzer": {
-            "type": "standard",
-            "max_token_length": 5,
-            "stopwords": "_english_"
+          "autocomplete_search": {
+            "tokenizer": "lowercase"
           }
         },
         "tokenizer": {
-          "edge_ngram_tokenizer": {
-            "type": "ngram",
+          "autocomplete": {
+            "type": "edge_ngram",
             "min_gram": 3,
-            "max_gram": 3,
+            "max_gram": 25,
             "token_chars": [
               "letter"
             ]
           }
-        }
+        } 
       }
     }
   },
@@ -54,7 +47,8 @@ payload = {
       "properties": {
         "claim": {
           "type": "text",
-          "analyzer": "standard_analyzer"
+          "analyzer": "autocomplete",
+          "search_analyzer": "autocomplete_search"
         },
         "label": {
           "type": "text"
