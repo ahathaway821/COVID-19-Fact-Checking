@@ -1,17 +1,20 @@
 import tensorflow as tf
+import tensorflow_hub as hub
 import argparse
 import os
 import numpy as np
 import json
+from sklearn.model_selection import train_test_split
 
 def model(x_train, y_train, x_test, y_test):
-    """Generate a simple model"""
-    model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(1024, activation=tf.nn.relu),
-        tf.keras.layers.Dropout(0.4),
-        tf.keras.layers.Dense(10, activation=tf.nn.softmax)
-    ])
+    hub_model = "https://tfhub.dev/google/tf2-preview/gnews-swivel-20dim/1"
+    hub_layer = hub.KerasLayer(hub_model, output_shape=[20], input_shape=[], 
+                           dtype=tf.string, trainable=True)
+    
+    model = tf.keras.Sequential()
+    model.add(hub_layer)
+    model.add(tf.keras.layers.Dense(16, activation='relu'))
+    model.add(tf.keras.layers.Dense(1))
 
     model.compile(optimizer='adam',
                   loss='sparse_categorical_crossentropy',
@@ -20,20 +23,6 @@ def model(x_train, y_train, x_test, y_test):
     model.evaluate(x_test, y_test)
 
     return model
-
-
-def _load_training_data(base_dir):
-    """Load MNIST training data"""
-    x_train = np.load(os.path.join(base_dir, 'train_data.npy'))
-    y_train = np.load(os.path.join(base_dir, 'train_labels.npy'))
-    return x_train, y_train
-
-
-def _load_testing_data(base_dir):
-    """Load MNIST testing data"""
-    x_test = np.load(os.path.join(base_dir, 'eval_data.npy'))
-    y_test = np.load(os.path.join(base_dir, 'eval_labels.npy'))
-    return x_test, y_test
 
 
 def _parse_args():
@@ -53,11 +42,17 @@ def _parse_args():
 if __name__ == "__main__":
     args, unknown = _parse_args()
 
-    train_data, train_labels = _load_training_data(args.train)
-    eval_data, eval_labels = _load_testing_data(args.train)
+    # Load data from the location specified by args.train (In this case, an S3 bucket).
+    df = pd.read_csv(os.path.join(args.train,'claims.csv'), index_col=0, engine="python")
 
-    mnist_classifier = model(train_data, train_labels, eval_data, eval_labels)
+    train_df, test_df = train_test_split(df, test_size=0.8, random_state=0)
+    train_examples = train_df['claim']
+    train_labels = train_df['label_binary']
+
+    test_examples = test_df['claim']
+    test_labels = test_df['label_binary']
+    use_classifier = model(train_data, train_labels, eval_data, eval_labels)
 
     if args.current_host == args.hosts[0]:
         # save model to an S3 directory with version number '00000001'
-        mnist_classifier.save(os.path.join(args.sm_model_dir, '000000001'), 'my_model.h5')
+        use_classifier.save(os.path.join(args.sm_model_dir, '000000001'), 'my_model.h5')
