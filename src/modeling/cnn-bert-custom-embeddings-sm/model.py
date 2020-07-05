@@ -3,10 +3,11 @@ import pandas as pd
 import re
 import string
 import numpy as np
-import tqdm
 import pickle
 import math
 import random
+import argparse
+import json
 
 import boto3
 from sagemaker import get_execution_role
@@ -22,6 +23,7 @@ import bert
 from bert.loader import StockBertConfig, map_stock_config_to_params, load_stock_weights
 from bert.tokenization.bert_tokenization import FullTokenizer
 from sklearn.utils import class_weight
+import joblib
 from sklearn.model_selection import train_test_split
 
 # Dictionary of English Contractions
@@ -65,6 +67,14 @@ contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
 
 # Regular expression for finding contractions
 contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()))
+
+BertTokenizer = bert.bert_tokenization.FullTokenizer
+bert_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1",
+                                trainable=True)
+vocabulary_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
+to_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
+tokenizer = BertTokenizer(vocabulary_file, to_lower_case)
+
 
 # Function for expanding contractions
 def expand_contractions(text,contractions_dict=contractions_dict):
@@ -134,8 +144,8 @@ def create_model(max_seq_len,cnn_filters,dropout_rate,dnn_units):
 
     return model
 
-def download_weights(weights_file, local_weights_file):
-    role = get_execution_role()
+def download_weights(local_weights_file):
+    #role = get_execution_role()
     bucket='trainedbertmodelweights'
     data_key = 'BERT_EMBEDDINGS_TRAINABLE_CNN_weights-improvement-19-0.98.hdf5'
     weights_location = 's3://{}/{}'.format(bucket, data_key)
@@ -145,12 +155,6 @@ def download_weights(weights_file, local_weights_file):
     s3_client.download_file(bucket, data_key, local_weights_file)
 
 def model(local_pretrained_weights):
-    BertTokenizer = bert.bert_tokenization.FullTokenizer
-    bert_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1",
-                                trainable=True)
-    vocabulary_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
-    to_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
-    tokenizer = BertTokenizer(vocabulary_file, to_lower_case)
 
     precision_obj = tf.keras.metrics.Precision()
     recall_obj = tf.keras.metrics.Recall()
@@ -189,13 +193,13 @@ if __name__ == "__main__":
     args, unknown = _parse_args()
     
     local_pretrained_weights_file = "pretrained_weights.hdf5"
-    download_weights(local_pretrained_weights)
+    download_weights(local_pretrained_weights_file)
     
     classifier_model = model(local_pretrained_weights_file)
-    joblib.dump(classifier_model, os.path.join(args.model_dir, "model.joblib"))
-    #if args.current_host == args.hosts[0]:
+    #joblib.dump(classifier_model, os.path.join(args.model_dir, "model.joblib"))
+    if args.current_host == args.hosts[0]:
         # save model to an S3 directory with version number '00000001'
-        #classifier_model.save(os.path.join(args.sm_model_dir, '000000001'), 'my_model.h5')
+        classifier_model.save(os.path.join(args.sm_model_dir, '000000001'), 'my_model.h5')
         
 
     
