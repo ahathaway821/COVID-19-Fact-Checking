@@ -38,8 +38,6 @@ Fields available
 '''
 for i in df.index:
     claim_record = df.loc[i]
-    if i == 1:
-        print(claim_record)
     payload = {
         "claim": claim_record["claim"],
         "date": claim_record["date"],
