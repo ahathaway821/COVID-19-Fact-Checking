@@ -23,14 +23,31 @@ df = df.fillna(value=values)
 df = df.fillna('')
 df['json'] = df.apply(lambda x: x.to_json(), axis=1)
 
+'''
+Fields available
+- RecordNumber
+- claim
+- label
+- source_label
+- source
+- date
+- claim_source
+- explanation
+- fact_check_url
+- label_binary
+'''
 for i in df.index:
     claim_record = df.loc[i]
+    if i == 1:
+        print(claim_record)
     payload = {
         "claim": claim_record["claim"],
         "date": claim_record["date"],
         "label": claim_record["label"],
         "claim_source": claim_record["claim_source"],
-        "fact_check_url": claim_record["fact_check_url"]
+        "fact_check_url": claim_record["fact_check_url"],
+        "explanation": claim_record["explanation"],
+        "clean_claim": claim_record["clean_claim"],
     }
     r = requests.post(url, json=payload) 
     #r = requests.post(url, auth=awsauth, json=payload)

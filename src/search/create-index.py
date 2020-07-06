@@ -62,6 +62,12 @@ payload = {
         },
         "fact_check_url": {
            "type": "text"
+        },
+        "explanation": {
+           "type": "text"
+        },
+        "clean_claim": {
+           "type": "text"
         }
       }
     
