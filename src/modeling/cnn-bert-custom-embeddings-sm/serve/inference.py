@@ -1,20 +1,17 @@
 import os
 import re
-import string
 import numpy as np
 import pickle
-import math
-import random
-import argparse
+import boto3
 import json
 
 import tensorflow as tf
 #from tensorflow import keras as keras
 #from tensorflow.keras import layers
-import tensorflow_hub as hub
+#import tensorflow_hub as hub
 
-import bert
-from bert.tokenization.bert_tokenization import FullTokenizer
+#import bert
+#from bert.tokenization.bert_tokenization import FullTokenizer
 
 # Dictionary of English Contractions
 contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
@@ -58,13 +55,25 @@ contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
 # Regular expression for finding contractions
 contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()))
 
-BertTokenizer = bert.bert_tokenization.FullTokenizer
-bert_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1",
-                                trainable=True)
-vocabulary_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
-to_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
-tokenizer = BertTokenizer(vocabulary_file, to_lower_case)
+#BertTokenizer = bert.bert_tokenization.FullTokenizer
+#bert_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1",
+#                                trainable=True)
+#vocabulary_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
+#to_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
+#tokenizer = BertTokenizer(vocabulary_file, to_lower_case)
 
+s3 = boto3.resource('s3')
+filename = 'bert_tokenizer.pickle'
+with open(filename, 'wb') as data:
+    s3.Bucket("covid-19-claims").download_fileobj('bert_tokenizer.pickle', data)
+
+
+# open a file, where you stored the pickled data
+file = open('./bert_tokenizer.pickle', 'rb')
+# dump information to that file
+tokenizer = pickle.load(file)
+# close the file
+file.close()
 
 # Function for expanding contractions
 def expand_contractions(text,contractions_dict=contractions_dict):
@@ -103,11 +112,15 @@ def input_handler(data, context):
         (dict): a JSON-serializable dict that contains request body and headers
     """
     if context.request_content_type == 'application/json':
-        claim_text = data.read().decode('utf-8')
-        claims = [preprocess_text(claim_text)]
+        body_raw = data.read().decode('utf-8')
+        print(body_raw)
+        body = json.loads(body_raw)
+        print(body)
+        claims = [preprocess_text(body['claim_text'])]
+        print(claims)
 
         max_seq_len=60
-        x_input,masks,segments = [], [],[]
+        x_input,masks,segments = [],[],[]
         for new_claim in claims:
             text = tokenizer.tokenize(new_claim)
             text = text[:max_seq_len-2]
@@ -121,10 +134,19 @@ def input_handler(data, context):
             masks.append(np.array(pad_masks))
             segments.append(np.array(segment_ids))
             
-        return [x_input, masks, segments]
+        print(tokens)
+        print(pad_masks)
+        print(segment_ids)
+        #return [tokens, pad_masks, segment_ids]
+        #return json.dumps({"instances": (tokens, pad_masks, segment_ids)})
+        return json.dumps({"instances": [{
+            "input_ids": tokens,
+            "input_mask": pad_masks,
+            "segment_ids": segment_ids
+        }]})
             
     else:
-        raise ValueError("Thie model only supports text/json input")
+        raise ValueError("Thie model only supports 'application/json' input")
 
 def output_handler(data, context):
     """Post-process TensorFlow Serving output before it is returned to the client.

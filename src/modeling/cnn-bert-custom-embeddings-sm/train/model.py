@@ -196,6 +196,11 @@ if __name__ == "__main__":
     download_weights(local_pretrained_weights_file)
     
     classifier_model = model(local_pretrained_weights_file)
+    
+    # Save tokenizer for inference
+    with open('bert_tokenizer.pickle', 'wb') as f:
+        pickle.dump(tokenizer, f)
+        
     #joblib.dump(classifier_model, os.path.join(args.model_dir, "model.joblib"))
     if args.current_host == args.hosts[0]:
         # save model to an S3 directory with version number '00000001'
