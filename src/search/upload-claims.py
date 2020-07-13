@@ -46,6 +46,8 @@ for i in df.index:
         "fact_check_url": claim_record["fact_check_url"],
         "explanation": claim_record["explanation"],
         "clean_claim": claim_record["clean_claim"],
+        "source": claim_record["source"],
+        "source_label": claim_record["source_label"]
     }
     r = requests.post(url, json=payload) 
     #r = requests.post(url, auth=awsauth, json=payload)
