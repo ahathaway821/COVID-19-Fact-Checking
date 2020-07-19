@@ -1,0 +1,7 @@
+bert==2.2.0
+bert-for-tf2==0.14.4
+tensorflow-hub
+boto
+boto3
+botocore
+pandas
