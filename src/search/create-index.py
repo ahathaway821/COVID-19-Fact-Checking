@@ -68,6 +68,12 @@ payload = {
         },
         "clean_claim": {
            "type": "text"
+        },
+        "source": {
+           "type": "text"
+        },
+        "source_label": {
+           "type": "text"
         }
       }
     
