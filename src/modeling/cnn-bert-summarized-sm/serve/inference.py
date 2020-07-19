@@ -55,21 +55,15 @@ contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
 # Regular expression for finding contractions
 contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()))
 
-#BertTokenizer = bert.bert_tokenization.FullTokenizer
-#bert_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1",
-#                                trainable=True)
-#vocabulary_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
-#to_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
-#tokenizer = BertTokenizer(vocabulary_file, to_lower_case)
-
 s3 = boto3.resource('s3')
-filename = 'bert_tokenizer.pickle'
-with open(filename, 'wb') as data:
-    s3.Bucket("covid-19-claims").download_fileobj('bert_tokenizer.pickle', data)
+local_pickle_filename = 'bert_tokenizer.pickle'
+s3_pickle_filename = 'bert_tokenizer_summarized.pickle'
+with open(local_pickle_filename, 'wb') as data:
+    s3.Bucket("covid-19-claims").download_fileobj(s3_pickle_filename, data)
 
 
 # open a file, where you stored the pickled data
-file = open('./bert_tokenizer.pickle', 'rb')
+file = open(f'./{local_pickle_filename}', 'rb')
 # dump information to that file
 tokenizer = pickle.load(file)
 # close the file
@@ -119,7 +113,7 @@ def input_handler(data, context):
         claims = [preprocess_text(body['claim_text'])]
         print(claims)
 
-        max_seq_len=60
+        max_seq_len=22
         x_input,masks,segments = [],[],[]
         for new_claim in claims:
             text = tokenizer.tokenize(new_claim)

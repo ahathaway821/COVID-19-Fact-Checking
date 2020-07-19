@@ -113,7 +113,6 @@ def create_model(max_seq_len,cnn_filters,dropout_rate,dnn_units):
     segment_ids = keras.layers.Input(shape=(max_seq_len,), dtype=tf.int32, name="segment_ids")
     
     _, bert_output = bert_layer([input_ids, input_mask, segment_ids])
-    #bert_output = bert_layer(input_ids)
     print("bert shape", bert_output.shape)
     
     
@@ -139,15 +138,16 @@ def create_model(max_seq_len,cnn_filters,dropout_rate,dnn_units):
        
     last_dense = layers.Dense(units=1,activation="sigmoid")(dropout)
     
-    model = keras.Model(inputs=[input_ids,input_mask,segment_ids], outputs=last_dense) 
+    model = keras.Model(inputs=[input_ids,input_mask,segment_ids], outputs=last_dense)
+    
     model.build(input_shape=(None, max_seq_len))
 
     return model
+    
 
 def download_weights(local_weights_file):
-    #role = get_execution_role()
     bucket='trainedbertmodelweights'
-    data_key = 'BERT_EMBEDDINGS_TRAINABLE_CNN_weights-improvement-19-0.98.hdf5'
+    data_key = 'BERT_SUMMARIZED_TRAINABLE_CNN_weights-improvement-12-0.97.hdf5' #'BERT_EMBEDDINGS_TRAINABLE_CNN_weights-improvement-19-0.98.hdf5'
     weights_location = 's3://{}/{}'.format(bucket, data_key)
     print(weights_location)
 
@@ -158,11 +158,11 @@ def model(local_pretrained_weights):
 
     precision_obj = tf.keras.metrics.Precision()
     recall_obj = tf.keras.metrics.Recall()
-    #Get model for Experiment3 created
-    CNN_FILTERS = 200
-    DROPOUT_RATE = 0.1
-    DNN_UNITS = 128
-    MAX_SEQ_LEN = 60
+
+    CNN_FILTERS = 100
+    DROPOUT_RATE = 0.2
+    DNN_UNITS = 256
+    MAX_SEQ_LEN = 22
     model = create_model(MAX_SEQ_LEN,CNN_FILTERS,DROPOUT_RATE,DNN_UNITS)
 
     model.load_weights(f"./{local_pretrained_weights}")
@@ -173,6 +173,18 @@ def model(local_pretrained_weights):
                    metrics=['accuracy',precision_obj,recall_obj]
                  )
     return model
+
+def save_tokenizer_pickle(tokenizer):
+    # save locally
+    with open('bert_tokenizer_summarized.pickle', 'wb') as f:
+        pickle.dump(tokenizer, f)
+    
+    # save to s3 for reference
+    bucket='covid-19-claims'
+    key='bert_tokenizer_summarized.pickle'
+    pickle_byte_tokenizer = pickle.dumps(tokenizer) 
+    s3_resource = boto3.resource('s3')
+    s3_resource.Object(bucket,key).put(Body=pickle_byte_tokenizer)
 
 def _parse_args():
     parser = argparse.ArgumentParser()
@@ -198,10 +210,8 @@ if __name__ == "__main__":
     classifier_model = model(local_pretrained_weights_file)
     
     # Save tokenizer for inference
-    with open('bert_tokenizer.pickle', 'wb') as f:
-        pickle.dump(tokenizer, f)
+    save_tokenizer_pickle(tokenizer)
         
-    #joblib.dump(classifier_model, os.path.join(args.model_dir, "model.joblib"))
     if args.current_host == args.hosts[0]:
         # save model to an S3 directory with version number '00000001'
         classifier_model.save(os.path.join(args.sm_model_dir, '000000001'), 'my_model.h5')
@@ -239,7 +249,7 @@ def input_fn(request_body, request_content_type):
     if request_content_type == 'application/json':
         claims = [preprocess_text(claim_text)]
 
-        max_seq_len=60
+        max_seq_len=22
         x_input,masks,segments = [], [],[]
         for new_claim in claims:
             text = tokenizer.tokenize(new_claim)
