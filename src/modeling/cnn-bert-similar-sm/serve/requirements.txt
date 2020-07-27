@@ -1,0 +1,6 @@
+numpy
+boto3
+tensorflow==2.1.0
+bert-for-tf2==0.14.4
+ktrain
+requests
